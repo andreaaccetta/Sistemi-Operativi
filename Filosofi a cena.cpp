@@ -4,63 +4,63 @@
 #include<unistd.h>
  
 void test(int);
-void prendiBacchette(int);
-void lasciaBacchette(int);
+void acquisisciFile(int);
+void liberaFile(int);
 void* agisci(void*);
 
 
 #define N 5
-#define PENSA 2
-#define FAME 1
-#define MANGIA 0
+#define ELABORA 2
+#define ATTENDI 1
+#define ELABORA_FILE 0
 #define SINISTRA (phnum + 4) % N
 #define DESTRA (phnum + 1) % N
  
 int stato[N];
  
 sem_t mutex;
-sem_t bacchette[N];
+sem_t file[N];
  
 int main(){
  
-    printf("+------------------------------------------------------+\n");
-    printf("+             PROBLEMA DEI FILOSOFI A CENA             +\n");
-    printf("+------------------------------------------------------+\n");
+    printf("+-----------------------------------------------------+\n");
+    printf("+   PROBLEMA DEI FILOSOFI A CENA APPLICATO AI FILE    +\n");
+    printf("+-----------------------------------------------------+\n");
     int n[N];
-    pthread_t filosofi[N];
+    pthread_t processi[N];
  
-    // initialize the semaphores
+    
     sem_init(&mutex, 0, 1);
  
     for (int i = 0; i < N; i++)
  
-        sem_init(&bacchette[i], 0, 0);
+        sem_init(&file[i], 0, 0);
  
     for (int i = 0; i < N; i++) {
  
         n[i] = i;
-        pthread_create(&filosofi[i], NULL,
+        pthread_create(&processi[i], NULL,
                        agisci, &n[i]);
     }
  
     for (int i = 0; i < N; i++){
  
-        pthread_join(filosofi[i], NULL);
+        pthread_join(processi[i], NULL);
     }
 }
 
 void test(int phnum)
 {
-    if (stato[phnum] == FAME
-        && stato[SINISTRA] != MANGIA
-        && stato[DESTRA] != MANGIA) {
+    if (stato[phnum] == ATTENDI
+        && stato[SINISTRA] != ELABORA_FILE
+        && stato[DESTRA] != ELABORA_FILE) {
         
-        stato[phnum] = MANGIA;
+        stato[phnum] = ELABORA_FILE;
         sleep(2);
-        printf("Il filosofo %d sta mangiando\n", phnum + 1);
+        printf("Il processo %d sta effettuando operazioni sui file\n", phnum + 1);
  
         
-        sem_post(&bacchette[phnum]);
+        sem_post(&file[phnum]);
     }
 }
 
@@ -70,37 +70,37 @@ void* agisci(void* num)
     while (true) {
  
         int* i = (int*)num;
-        prendiBacchette(*i);
+        acquisisciFile(*i);
         sleep(0);
-        lasciaBacchette(*i);
+        liberaFile(*i);
     }
 }
  
-void prendiBacchette(int phnum)
+void acquisisciFile(int phnum)
 {
  
     sem_wait(&mutex);
  
     
-    stato[phnum] = FAME;
+    stato[phnum] = ATTENDI;
 
     test(phnum);
  
     sem_post(&mutex);
     
-    sem_wait(&bacchette[phnum]);
+    sem_wait(&file[phnum]);
 
 }
  
-void lasciaBacchette(int phnum)
+void liberaFile(int phnum)
 {
  
     sem_wait(&mutex);
  
-    // state that thinking
-    stato[phnum] = PENSA;
+    
+    stato[phnum] = ELABORA;
 
-    printf("Il filosofo %d sta pensando\n", phnum + 1);
+    printf("Il processo %d sta effettuando elaborazioni secondarie\n", phnum + 1);
     sleep(2);
     test(SINISTRA);
     test(DESTRA);
